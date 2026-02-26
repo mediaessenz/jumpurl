@@ -45,20 +45,10 @@ use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
  */
 class JumpUrlHandler implements MiddlewareInterface
 {
-    /**
-     * @var TimeTracker
-     */
-    protected $timeTracker;
-
-    /**
-     * @var TypoScriptFrontendController
-     */
-    protected $typoScriptFrontendController;
-
-    public function __construct(TypoScriptFrontendController $typoScriptFrontendController = null, TimeTracker $timeTracker = null)
+    public function __construct(protected ?TypoScriptFrontendController $typoScriptFrontendController = null, protected ?TimeTracker $timeTracker = null)
     {
-        $this->typoScriptFrontendController = $typoScriptFrontendController ?? $GLOBALS['TSFE'];
-        $this->timeTracker = $timeTracker ?? GeneralUtility::makeInstance(TimeTracker::class);
+        $this->typoScriptFrontendController ??= $GLOBALS['TSFE'];
+        $this->timeTracker ??= GeneralUtility::makeInstance(TimeTracker::class);
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
