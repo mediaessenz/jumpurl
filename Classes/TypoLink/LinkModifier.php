@@ -16,6 +16,7 @@ namespace FoT3\Jumpurl\TypoLink;
  */
 
 use FoT3\Jumpurl\JumpUrlUtility;
+use stdClass;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
@@ -47,7 +48,6 @@ class LinkModifier
     public function __invoke(AfterLinkIsGeneratedEvent $event): void
     {
         $this->contentObjectRenderer = $event->getContentObjectRenderer();
-        $this->typoScriptFrontendController = $this->contentObjectRenderer->getTypoScriptFrontendController();
         $isFrontendRequest = ($GLOBALS['TYPO3_REQUEST'] ?? null) instanceof ServerRequest && ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isFrontend();
 
         if ($isFrontendRequest && $this->isEnabled($event)) {
@@ -197,10 +197,10 @@ class LinkModifier
         return $linkParameter;
     }
 
-    protected function getTypoScriptFrontendController(): TypoScriptFrontendController
+    protected function getTypoScriptFrontendController(): TypoScriptFrontendController|stdClass
     {
-        if ($this->typoScriptFrontendController instanceof TypoScriptFrontendController) {
-            return $this->typoScriptFrontendController;
+        if (method_exists($this->contentObjectRenderer, 'getTypoScriptFrontendController') && $this->contentObjectRenderer->getTypoScriptFrontendController() instanceof TypoScriptFrontendController) {
+            return $this->contentObjectRenderer->getTypoScriptFrontendController();
         }
 
         // This usually happens when typolink is created by the TYPO3 Backend, where no TSFE object
@@ -224,10 +224,19 @@ class LinkModifier
         }
         $request = $request->withAttribute('language', $language);
 
-        $this->typoScriptFrontendController = GeneralUtility::makeInstance(TypoScriptFrontendController::class);
-        $this->typoScriptFrontendController->initializePageRenderer($request);
-        $this->typoScriptFrontendController->initializeLanguageService($request);
-        return $this->typoScriptFrontendController;
+        if (class_exists(TypoScriptFrontendController::class)) {
+            $this->typoScriptFrontendController = GeneralUtility::makeInstance(TypoScriptFrontendController::class);
+            $this->typoScriptFrontendController->initializePageRenderer($request);
+            $this->typoScriptFrontendController->initializeLanguageService($request);
+            return $this->typoScriptFrontendController;
+        }
+        $fakeTypoScriptFrontentController = new stdClass();
+        $fakeTypoScriptFrontentController->id = $request->getAttribute('frontend.page.information')->getId();
+        $fakeTypoScriptFrontentController->type =$request->getAttribute('frontend.page.information')->getPageRecord()['type'];
+        $typoScriptConfigArray = $request->getAttribute('frontend.typoscript')?->getConfigArray();
+        $fakeTypoScriptFrontentController->absRefPrefix = $typoScriptConfigArray['absRefPrefix'] ?? [];
+        $fakeTypoScriptFrontentController->config = $typoScriptConfigArray['config'] ?? [];
+        return $fakeTypoScriptFrontentController;
     }
 
     protected function getContentObjectRenderer(): ContentObjectRenderer
