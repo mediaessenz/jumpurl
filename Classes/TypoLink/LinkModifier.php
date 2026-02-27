@@ -20,6 +20,7 @@ use stdClass;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
+use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Site\Entity\NullSite;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
@@ -30,6 +31,8 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 use TYPO3\CMS\Frontend\Event\AfterLinkIsGeneratedEvent;
 use TYPO3\CMS\Frontend\Http\UrlProcessorInterface;
+use TYPO3\CMS\Frontend\Page\PageInformation;
+use TYPO3\CMS\Frontend\Page\PageParts;
 use TYPO3\CMS\Frontend\Typolink\LinkResultInterface;
 use TYPO3\CMS\Frontend\Typolink\PageLinkBuilder;
 
@@ -230,13 +233,15 @@ class LinkModifier
             $this->typoScriptFrontendController->initializeLanguageService($request);
             return $this->typoScriptFrontendController;
         }
-        $fakeTypoScriptFrontentController = new stdClass();
-        $fakeTypoScriptFrontentController->id = $request->getAttribute('frontend.page.information')->getId();
-        $fakeTypoScriptFrontentController->type =$request->getAttribute('frontend.page.information')->getPageRecord()['type'];
+        $fakeTypoScriptFrontendController = new stdClass();
+        $fakeTypoScriptFrontendController->id = $request->getAttribute('frontend.page.information')->getId();
+        $pageArgs = $request->getAttribute('routing');
+        $typeNum = $pageArgs instanceof PageArguments ? (int)$pageArgs->getPageType() : 0;
+        $fakeTypoScriptFrontendController->type = $typeNum;
         $typoScriptConfigArray = $request->getAttribute('frontend.typoscript')?->getConfigArray();
-        $fakeTypoScriptFrontentController->absRefPrefix = $typoScriptConfigArray['absRefPrefix'] ?? [];
-        $fakeTypoScriptFrontentController->config = $typoScriptConfigArray['config'] ?? [];
-        return $fakeTypoScriptFrontentController;
+        $fakeTypoScriptFrontendController->absRefPrefix = $typoScriptConfigArray['absRefPrefix'] ?? [];
+        $fakeTypoScriptFrontendController->config = $typoScriptConfigArray['config'] ?? [];
+        return $fakeTypoScriptFrontendController;
     }
 
     protected function getContentObjectRenderer(): ContentObjectRenderer
