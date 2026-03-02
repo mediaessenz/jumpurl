@@ -231,7 +231,7 @@ class JumpUrlHandler implements MiddlewareInterface
      */
     protected function isJumpUrlHashValid(string $jumpUrl, string $submittedHash): bool
     {
-        return $submittedHash === JumpUrlUtility::calculateHash($jumpUrl);
+        return $submittedHash === JumpUrlUtility::calculateHash($jumpUrl, 'jumpurl');
     }
 
     /**

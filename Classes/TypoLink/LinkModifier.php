@@ -80,7 +80,7 @@ class LinkModifier
                 );
                 $urlParameters = array_merge($urlParameters, $secureParameters);
             } else {
-                $urlParameters['juHash'] = JumpUrlUtility::calculateHash($url);
+                $urlParameters['juHash'] = JumpUrlUtility::calculateHash($url, 'jumpurl');
             }
 
             $typoLinkConfiguration = [
